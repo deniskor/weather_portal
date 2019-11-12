@@ -1,6 +1,6 @@
 from django.db import models
 from datetime import datetime
-
+import json
 
 # Create your models here.
 class City(models.Model):
@@ -30,5 +30,15 @@ class Result(models.Model):
             kwargs.update(parsed_json)
         super(Result, self).__init__(*args, **kwargs)
 
-    # def __str__(self):
-    #     return self.time.strftime("%m/%d/%Y, %H:%M:%S")
+    def get_data(self):
+        data = {
+            'time': self.timestamp.strftime('%H:%M'),
+            'temp': self.temp,
+            'clouds': self.clouds,
+            'wind': self.wind,
+            'city':self.city.id,
+        }
+        return data
+
+    def __str__(self):
+        return self.timestamp.strftime("%m/%d/%Y, %H:%M:%S")

@@ -1,15 +1,19 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <form method='GET' id="find_form">
+    <div class="d-flex flex-wrap justify-content-center">
+        <form method='GET' id="find_form">
         <select id='select_city' style='width: 200px;' class="select2">
         </select>
         <button type="submit" id='find' class="btn btn-primary" disabled>Find</button>
     </form>
-    <hr>
-    <div id="result">
-
     </div>
+
+    <hr>
+
+    <div id='date_weather' class="card">
+    </div>
+
 {% endblock %}
 
 {% block script %}
@@ -51,20 +55,44 @@
                 console.log(selected_option);
             });
 
+            function draw_wather(el, data) {
+                let s = `<div class="card-body "><div class="d-flex flex-wrap justify-content-center"><div class="card-group">`;
+
+                data['list'].forEach(function (element) {
+                    let card_s = `<div class="card border-secondary text-center" style="max-width: 20rem;">
+                        <div class="card-header">
+                            <h3>${Math.round(element['temp'])}℃</h3>
+                                ${element['time']}
+                        </div>
+                        <div class="card-body text-secondary">
+                            <p class="card-text">Clouds ${element['clouds']}%.</p>
+                            <p class="card-text">Wind ${element['wind']}m/s.</p>
+                        </div>
+                    </div>`;
+                    s += card_s;
+                });
+
+                $(el).append(s.concat("</div></div></div>"))
+            }
+
             let draw_result = function (el, data) {
                 $(el).empty();
-                $(el).append(data);
+
+                data['items'].forEach(function (element) {
+                    $(el).append(`<div class="card-header alert-primary"> ${element['date']} </div>`);
+                    draw_wather(el, element);
+                });
             };
             $('#find_form').on('submit', function (e) {
                 e.preventDefault();
                 if (selected_option) {
                     $.ajax({
-                        url:'{% url 'home_page' %}',
+                        url: '{% url 'home_page' %}',
                         type: 'GET',
                         data: {'city': selected_option},
                         success: function (data) {
                             console.log(data);
-                            draw_result($('#result'), JSON.stringify(data));
+                            draw_result($('#date_weather'), data);
                         }
                     });
                 } else {

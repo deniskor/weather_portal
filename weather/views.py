@@ -59,8 +59,25 @@ def home_page(request):
         if int(weather.get('cod')) == 200:
             try:
                 results = save_results(city, weather)
-                data = serializers.serialize('json', results)
-                return JsonResponse({'list': data})
+
+                data = []
+                dates = sorted(list(set(r.timestamp.strftime('%m/%d/%Y') for r in results)))
+
+                for date in dates:
+                    day = {
+                        'date': date,
+                        'list': []
+                    }
+                    lst = []
+                    for res in results:
+                        if res.timestamp.strftime('%m/%d/%Y') == date:
+                            lst.append(res.get_data())
+                            results.remove(res)
+                    day['list'] = sorted(lst, key=lambda k: k['time'])
+
+                    data.append(day)
+
+                return JsonResponse({'items': data})
             except KeyError:
                 return JsonResponse({'code': 404, 'msg': 'Results not found'})
         else:
