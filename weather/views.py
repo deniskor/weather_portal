@@ -1,26 +1,21 @@
 from django.shortcuts import render
 from django.http import JsonResponse, Http404
-from django.core import serializers
 from .models import City, Result
 import requests
-import json
 from django.conf import settings
 
 
-# Create your views here.
-# def home_page(request, e):
-#     context = {
-#         'title': 'Home page',
-#     }
-#
-#     return render(request, 'weather/home.html', context)
-
-
-def find_view(request):
+def results(request):
     context = {
-        'title': 'Find'
+        'title': 'Results'
     }
-    return render(request, 'base.html', context)
+
+    if request.method == 'GET' and request.is_ajax():
+        data = [x.get_data() for x in Result.objects.all()]
+        return JsonResponse({'code': '200', 'items': data})
+
+    return render(request, 'test.html', context)
+
 
 
 def history_view(request):
@@ -42,18 +37,15 @@ def home_page(request):
         return requests.get(r).json()
 
     def save_results(city, data):
-        try:
-            res = [Result(city=city, json=r) for r in data['list']]
-            Result.objects.bulk_create(res)
-            return res
-        except KeyError:
-            raise KeyError
+        res = [Result(city=city, json=r) for r in data['list']]
+        Result.objects.bulk_create(res)
+        return res
 
     if request.method == 'GET' and request.is_ajax():
         try:
             city = City.objects.get(id=request.GET.get('city'))
         except City.DoesNotExist:
-            return JsonResponse({'code': 404, 'msg': "city doesn't exist"})
+            return JsonResponse({'code': '404', 'msg': "City not found"})
 
         weather = get_weather(city.id)
         if int(weather.get('cod')) == 200:
@@ -61,29 +53,26 @@ def home_page(request):
                 results = save_results(city, weather)
 
                 data = []
-                dates = sorted(list(set(r.timestamp.strftime('%m/%d/%Y') for r in results)))
+                dates = sorted(set(r.dt.strftime('%m/%d/%Y') for r in results))
 
                 for date in dates:
-                    day = {
-                        'date': date,
-                        'list': []
-                    }
-                    lst = []
+                    day = dict(date=date, list=list())
+
                     for res in results:
-                        if res.timestamp.strftime('%m/%d/%Y') == date:
-                            lst.append(res.get_data())
+                        if res.dt.strftime('%m/%d/%Y') == date:
+                            day['list'].append(res.get_data())
                             results.remove(res)
-                    day['list'] = sorted(lst, key=lambda k: k['time'])
+                    day['list'] = sorted(day['list'], key=lambda k: k['time'])
 
                     data.append(day)
 
-                return JsonResponse({'items': data})
+                return JsonResponse({'code': '200', 'items': data})
             except KeyError:
-                return JsonResponse({'code': 404, 'msg': 'Results not found'})
+                return JsonResponse({'code': '404', 'msg': 'Weather not found'})
         else:
             return JsonResponse({'code': weather['cod'], 'msg': weather['message']})
 
-    return render(request, 'test.html', context)
+    return render(request, 'weather/home.html', context)
 
 
 def get_city(request):

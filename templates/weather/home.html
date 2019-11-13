@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="d-flex flex-wrap justify-content-center" >
+        <form method='GET' id="find_form">
+            <select id='select_city' style='width: 200px;' class="select2">
+            </select>
+            <button type="submit" id='find' class="btn btn-primary" disabled>Find</button>
+        </form>
+    </div>
+
+    <hr>
+    <div id="date_weather">
+    </div>
+
+{% endblock %}
+
+{% block script %}
+    <script>
+        $("#home_page").addClass("active");
+        $(document).ready(function () {
+            let selected_option = null;
+            $("#select_city").select2({
+                placeholder: "Select a City",
+                allowClear: true,
+                minimumInputLength: 2,
+                ajax: {
+                    url: '{% url 'get_city' %}',
+                    type: 'GET',
+                    dataType: 'json',
+                    quietMillis: 500,
+                    data: function (term, page) {
+                        return {
+                            q: term,
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data.items, function (val, id) {
+                                return {id: id, text: val}
+                            })
+                        };
+                    },
+                }
+            });
+
+            $("#select_city").on('select2:select', function (event) {
+                selected_option = $(event.currentTarget).find("option:selected").val();
+                document.getElementById("find").disabled = false;
+                console.log(selected_option);
+            });
+            $("#select_city").on('select2:unselecting', function (event) {
+                selected_option = null;
+                document.getElementById("find").disabled = true;
+                console.log(selected_option);
+            });
+
+            function draw_wather(el, data) {
+                let s = `<div class="card-body ">
+                             <div class="d-flex flex-wrap justify-content-center">
+                                  <div class="card-group">`;
+
+                data['list'].forEach(function (element) {
+                    let card_s = `
+                        <div class="card border-secondary text-center" style="width: 14rem;">
+                            <div class="card-header">
+                                <h3>${element['temp']}℃</h3>
+                                    ${element['time']}
+                            </div>
+                            <div class="card-body text-secondary">
+                                <p class="card-text">Clouds ${element['clouds']}%.</p>
+                                <p class="card-text">Wind ${element['wind']}m/s.</p>
+                            </div>
+                        </div>`;
+                    s += card_s;
+                });
+
+                $(el).append(s.concat("</div></div></div>"))
+            }
+
+            let draw_result = function (el, data) {
+                $(el).empty();
+                $(el).append(`<div class="card">`);
+                data['items'].forEach(function (element) {
+                    $(el).append(`<div class="card-header alert-primary"> ${element['date']} </div>`);
+                    draw_wather(el, element);
+                });
+                $(el).append(`</div>`);
+            };
+            $('#find_form').on('submit', function (e) {
+                e.preventDefault();
+                if (selected_option) {
+                    $.ajax({
+                        url: '{% url 'home_page' %}',
+                        type: 'GET',
+                        data: {'city': selected_option},
+                        success: function (data) {
+                            console.log(data);
+                            if(data['code'] === '200'){
+                                draw_result($('#date_weather'), data);
+                            }
+                            else if(data['code'] === '404'){
+                                $('#date_weather').empty();
+                                $('#date_weather').append(`
+                                    <div class="alert alert-danger text-center" role="alert">
+                                          ${data['msg'].charAt(0).toUpperCase()+data['msg'].slice(1)}
+                                    </div>`);
+                            }
+                        }
+                    });
+                } else {
+                    alert('No selected City!')
+                }
+            });
+
+        });
+    </script>
+{% endblock %}
