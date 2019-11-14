@@ -25,7 +25,11 @@ def results(request):
         'title': 'Results',
         'objs': data
     }
-    if request.method =='GET' and request.is_ajax():
+
+    if request.method == 'GET' and request.is_ajax():
+        if not len(data.object_list):
+            return JsonResponse({'code': '404', 'msg': 'Weather not found'})
+
         json_data = {
             'code': '200',
             'page_cnt': page_cnt,
@@ -34,7 +38,6 @@ def results(request):
         }
         return JsonResponse(json_data)
     return render(request, 'test.html', context)
-
 
 
 def history_view(request):

@@ -35,54 +35,86 @@
         let params_str = urlParams.toString();
         let page_cnt = 0;
 
+        function render_weather(data) {
+            let el = $('#res');
+            el.empty();
+        }
+
         function render_paginator() {
             let el = $('#pagination');
             el.empty();
 
-            let start_range = current_page <= 5?
-                1: Math.abs(current_page-page_cnt) <= 5? page_cnt-10:current_page - 5;
-            let end_range = start_range + 10 <= page_cnt? start_range + 10 : page_cnt;
+            let print_begin = false;
+            let print_end = false;
 
+            let start_range = 1;
+            let end_range = page_cnt;
+
+            if (current_page > 6) {
+                print_begin = true;
+                start_range = current_page - 5;
+            }
+            if (page_cnt - current_page > 6) {
+                print_end = true;
+                end_range = current_page + 5;
+            }
             let render_str = `
                 <div class="pagination justify-content-center">
                     <ul class="pagination justify-content-center">`;
 
-
-            render_str += `
+            if (print_begin) {
+                render_str += `
                 <li class="page-item">
                     <a class="page-link" href="?page=1">1</a>
+                </li>
+                <li class="page-item disable">
+                    <a class="page-link">...</a>
                 </li>`;
-
+            }
             for (let i = start_range; i <= end_range; i++) {
-                {#let url = params_str.replace('page=');#}
-                let active = i == current_page ? 'active' : '';
+                let active = i === current_page ? 'active' : '';
                 render_str += `
                     <li class="page-item ${active}">
                         <a class="page-link" href="?page=${i}">${i}</a>
                     </li>`;
             }
-            render_str += `
+            if (print_end) {
+                render_str += `
+                <li class="page-item disable">
+                    <a class="page-link">...</a>
+                </li>
                 <li class="page-item">
                     <a class="page-link" href="?page=${page_cnt}">${page_cnt}</a>
                 </li>`;
+            }
             render_str += '</div></div>';
+            console.log(start_range, end_range, print_begin, print_end);
             el.append(render_str)
         }
 
-        function get_paginator() {
+        function get_data() {
             let url = `{% url 'results' %}?${urlParams.toString()}`;
             $.ajax({
                 url: url,
                 type: 'GET',
                 success: function (data) {
                     console.log(data);
-                    page_cnt = data['page_cnt'];
-                    current_page = data['curr_page'];
-                    render_paginator();
+                    if (data['code'] === '404') {
+                        $('#res').empty();
+                        $('#res').append(`
+                                    <div class="alert alert-danger text-center" role="alert">
+                                          ${data['msg'].charAt(0).toUpperCase() + data['msg'].slice(1)}
+                                    </div>`);
+                    } else {
+                        page_cnt = data['page_cnt'];
+                        current_page = data['curr_page'];
+                        render_paginator();
+                        render_weather(data['items']);
+                    }
                 }
             });
         }
 
-        get_paginator()
+        get_data()
     </script>
 {% endblock %}
