@@ -55,7 +55,7 @@
                 console.log(selected_option);
             });
 
-            function draw_wather(el, data) {
+            function draw_weather(el, data) {
                 let s = `<div class="card-body ">
                              <div class="d-flex flex-wrap justify-content-center">
                                   <div class="card-group">`;
@@ -83,7 +83,7 @@
                 $(el).append(`<div class="card">`);
                 data['items'].forEach(function (element) {
                     $(el).append(`<div class="card-header alert-primary"> ${element['date']} </div>`);
-                    draw_wather(el, element);
+                    draw_weather(el, element);
                 });
                 $(el).append(`</div>`);
             };

@@ -3,17 +3,36 @@ from django.http import JsonResponse, Http404
 from .models import City, Result
 import requests
 from django.conf import settings
+from django.core.paginator import Paginator
+
+OBJS_PER_PAGE = 8
 
 
 def results(request):
+    objs = Result.objects.all().order_by('dt')
+    paginator = Paginator(objs, OBJS_PER_PAGE)
+    page = int(request.GET.get('page', 1))
+
+    page_cnt = paginator.count // OBJS_PER_PAGE
+    if page > page_cnt:
+        page = page_cnt
+    elif page < 1:
+        page = 1
+
+    data = paginator.get_page(page)
+
     context = {
-        'title': 'Results'
+        'title': 'Results',
+        'objs': data
     }
-
-    if request.method == 'GET' and request.is_ajax():
-        data = [x.get_data() for x in Result.objects.all()]
-        return JsonResponse({'code': '200', 'items': data})
-
+    if request.method =='GET' and request.is_ajax():
+        json_data = {
+            'code': '200',
+            'page_cnt': page_cnt,
+            'curr_page': page,
+            'items': [d.get_data() for d in data.object_list],
+        }
+        return JsonResponse(json_data)
     return render(request, 'test.html', context)
 
 
