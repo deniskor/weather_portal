@@ -30,13 +30,13 @@ class Result(models.Model):
             kwargs.update(parsed_json)
         super(Result, self).__init__(*args, **kwargs)
 
-    def get_data(self):
+    def get_data(self, time_format='%H:%M'):
         data = {
-            'time': self.dt.strftime('%H:%M'),
+            'time': self.dt.strftime(time_format),
             'temp': round(self.temp),
             'clouds': self.clouds,
             'wind': self.wind,
-            'city': self.city.id,
+            'city': self.city.name,
         }
         return data
 

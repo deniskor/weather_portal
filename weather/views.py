@@ -9,24 +9,28 @@ OBJS_PER_PAGE = 8
 
 
 def results(request):
-    objs = Result.objects.all().order_by('dt')
-    paginator = Paginator(objs, OBJS_PER_PAGE)
-    page = int(request.GET.get('page', 1))
-
-    page_cnt = paginator.count // OBJS_PER_PAGE
-    if page > page_cnt:
-        page = page_cnt
-    elif page < 1:
-        page = 1
-
-    data = paginator.get_page(page)
-
     context = {
-        'title': 'Results',
-        'objs': data
+        'title': 'Results'
     }
 
     if request.method == 'GET' and request.is_ajax():
+        city_id = request.GET.get('city')
+        if city_id:
+            objs = Result.objects.filter(city=city_id).order_by('dt')
+        else:
+            objs = Result.objects.all().order_by('dt')
+
+        paginator = Paginator(objs, OBJS_PER_PAGE)
+        page = int(request.GET.get('page', 1))
+
+        page_cnt = paginator.count // OBJS_PER_PAGE
+        if page > page_cnt:
+            page = page_cnt
+        elif page < 1:
+            page = 1
+
+        data = paginator.get_page(page)
+
         if not len(data.object_list):
             return JsonResponse({'code': '404', 'msg': 'Weather not found'})
 
@@ -34,7 +38,7 @@ def results(request):
             'code': '200',
             'page_cnt': page_cnt,
             'curr_page': page,
-            'items': [d.get_data() for d in data.object_list],
+            'items': [d.get_data('%m-%d-%Y %H:%M') for d in data.object_list],
         }
         return JsonResponse(json_data)
     return render(request, 'test.html', context)
