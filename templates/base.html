@@ -1,3 +1,4 @@
+{% load staticfiles %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -11,10 +12,21 @@
     <link href='https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.10/css/select2.css'
           rel='stylesheet'
           type='text/css'>
-
+{#    <link rel="stylesheet" href="{% static "css/datepicker.min.css" %}"/>#}
+    <link rel="stylesheet" href="{% static "css/all.min.css" %}"/>
+    <link rel="stylesheet" href="{% static "datepicker/css/bootstrap-datepicker3.standalone.css" %}"/>
     <title>MWP | {{ title }}</title>
 </head>
 <body>
+<div class="container">
+    <a class="d-flex justify-content-end" role="button" href="https://github.com/deniskor/weather_portal">
+        <button type="button" class="btn btn-dark ">
+            <span class="fab fa-github"></span>
+            See code on GitHub
+        </button>
+    </a>
+</div>
+
 {% include 'navbar.html' %}
 <br>
 <div class="container">
@@ -32,6 +44,9 @@
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.10/js/select2.full.min.js'></script>
+{#<script src="{% static 'js/datepicker.min.js' %}"></script>#}
+<script src="{% static 'js/all.min.js' %}"></script>
+<script src="{% static 'datepicker/js/bootstrap-datepicker.js' %}"></script>
 
 {% block script %}
 {% endblock %}

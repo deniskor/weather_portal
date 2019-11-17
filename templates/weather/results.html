@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div id="filter " class="d-flex justify-content-center">
+        <ul class="list-group list-group-horizontal ">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <select id='select_city' style='width: 200px;' class="select2 "></select>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                    </div>
+                    <input type="text" class="form-control" readonly placeholder="Date from" aria-label="Date from"
+                           id="date_from">
+                </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                    </div>
+                    <input type="text" class="form-control" readonly placeholder="Date to" aria-label="Date to"
+                           id="date_to">
+                </div>
+            </li>
+
+        </ul>
+    </div>
+    <hr>
+
+    <div id="res">
+    </div>
+    <hr>
+
+    <div id='pagination'>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+    <script>
+        $("#results_page").addClass("active");
+        let urlParams = new URLSearchParams(window.location.search);
+        let current_page = 1;
+        console.log(current_page);
+        let page_cnt = 0;
+        let selected_option = null;
+
+        let dp_options = {
+            format: 'mm/dd/yy',
+            autoclose: true,
+            clearBtn: true,
+            todayHighlight: true,
+        };
+
+        $(function () {
+            $('#date_from').datepicker(dp_options);
+            $('#date_to').datepicker(dp_options);
+        });
+
+        function formatDate(date) {
+            var day = date.getDate();
+            var monthIndex = date.getMonth() + 1;
+            var year = date.getFullYear();
+
+            return `${year}-${monthIndex < 10 ? '0' + monthIndex : monthIndex}-${day} 00:00`;
+        }
+
+        $('#date_from').on('changeDate', function (e) {
+            if (e.date) {
+                console.log(e.date.getTime());
+                urlParams.set('from', formatDate(e.date));
+                console.log(urlParams.toString());
+
+            } else {
+                urlParams.delete('from');
+            }
+            get_data();
+        });
+        $('#date_to').on('changeDate', function (e) {
+            if (e.date) {
+                console.log(e.date.getTime());
+                urlParams.set('to', formatDate(e.date));
+                console.log(urlParams.toString());
+
+            } else {
+                urlParams.delete('to');
+            }
+            get_data();
+        });
+        $("#select_city").select2({
+            placeholder: "City",
+            allowClear: true,
+            minimumInputLength: 2,
+            ajax: {
+                url: '{% url 'get_city' %}',
+                type: 'GET',
+                dataType: 'json',
+                quietMillis: 500,
+                data: function (term, page) {
+                    return {
+                        q: term,
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: $.map(data.items, function (val, id) {
+                            return {id: id, text: val}
+                        })
+                    };
+                },
+            }
+        });
+
+        $("#select_city").on('select2:select', function (event) {
+            selected_option = $(event.currentTarget).find("option:selected").val();
+            urlParams.set('city', selected_option);
+            urlParams.set('page', 1);
+            get_data();
+            console.log(selected_option);
+        });
+        $("#select_city").on('select2:unselecting', function (event) {
+            selected_option = null;
+            urlParams.delete('city');
+            urlParams.set('page', 1);
+            get_data();
+            console.log(selected_option);
+        });
+
+        function render_weather(data) {
+            $('#res').empty();
+            let el = document.getElementById('res');
+
+            let card_container = document.createElement('div.card-body');
+            let flex_group = document.createElement('div');
+            flex_group.className = 'd-flex flex-wrap justify-content-center';
+
+            data.forEach(function (element) {
+                let card = document.createElement('div');
+                card.className = 'card border-secondary text-center';
+
+                let card_header = document.createElement('div');
+                card_header.className = 'card-header';
+
+                let h3 = document.createElement('h3');
+                let strong = document.createElement('strong');
+                h3.appendChild(document.createTextNode(`${element['temp']}℃`));
+                strong.appendChild(document.createTextNode(`${element['city']}`));
+
+                card_header.appendChild(h3);
+                card_header.appendChild(document.createTextNode(`${element['time']}`));
+                card_header.innerHTML += '<br>';
+                card_header.appendChild(strong);
+
+                let card_body = document.createElement('div');
+                card_body.className = 'card-body text-secondary';
+                card_body.appendChild(document.createTextNode(`Weather: ${element['weather']}.`));
+                card_body.innerHTML += '<br>';
+                card_body.appendChild(document.createTextNode(`Clouds: ${element['clouds']}%.`));
+                card_body.innerHTML += '<br>';
+                card_body.appendChild(document.createTextNode(`Wind: ${element['wind']}m/s.`));
+
+                card.appendChild(card_header);
+                card.appendChild(card_body);
+                flex_group.appendChild(card);
+            });
+            card_container.appendChild(flex_group);
+            el.appendChild(card_container)
+        }
+
+        function click_pag(page) {
+            urlParams.set("page", page);
+            console.log(urlParams.toString());
+            get_data();
+        }
+
+
+        function render_paginator() {
+            let el = $('#pagination');
+            el.empty();
+
+            let print_begin = false;
+            let print_end = false;
+
+            let start_range = 1;
+            let end_range = page_cnt;
+
+            if (current_page > 6) {
+                print_begin = true;
+                start_range = current_page - 5;
+            }
+            if (page_cnt - current_page > 6) {
+                print_end = true;
+                end_range = current_page + 5;
+            }
+
+            let render_str = `
+                <div class="pagination justify-content-center">
+                    <ul class="pagination justify-content-center">`;
+
+            if (print_begin) {
+                render_str += `
+                <li class="page-item">
+                    <span class="page-link" onclick="click_pag(1)">1</span>
+                </li>
+                <li class="page-item disable">
+                    <a class="page-link">...</a>
+                </li>`;
+            }
+            for (let i = start_range; i <= end_range; i++) {
+                let active = i === current_page ? 'active' : '';
+                render_str += `
+                    <li class="page-item ${active}">
+                        <span class="page-link" onclick="click_pag(${i})">${i}</span>
+                    </li>`;
+            }
+            if (print_end) {
+                render_str += `
+                <li class="page-item disable">
+                    <a class="page-link">...</a>
+                </li>
+                <li class="page-item">
+                    <span class="page-link" onclick="click_pag(${page_cnt})">${page_cnt}</span>
+                </li>`;
+            }
+            render_str += '</div></div>';
+            console.log(start_range, end_range, print_begin, print_end);
+            el.append(render_str)
+        }
+
+        function get_data() {
+            let url = `{% url 'results' %}?${urlParams.toString()}`;
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function (data) {
+                    console.log(data);
+                    if (data['code'] === '404') {
+                        $('#res').empty();
+                        $('#pagination').empty();
+                        $('#res').append(`
+                                    <div class="alert alert-danger text-center" role="alert">
+                                          ${data['msg'].charAt(0).toUpperCase() + data['msg'].slice(1)}
+                                    </div>`);
+                    } else {
+                        page_cnt = data['page_cnt'];
+                        current_page = data['curr_page'];
+                        console.log(urlParams.toString());
+                        render_paginator();
+                        render_weather(data['items']);
+                    }
+                }
+            });
+        }
+
+        get_data()
+    </script>
+{% endblock %}
