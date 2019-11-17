@@ -1,1 +1,1 @@
-web: python manage.py runserver
+web: gunicorn weather_portal.wsgi --log-file
