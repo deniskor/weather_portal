@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 import dj_database_url
+
 import django_heroku
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -26,10 +27,10 @@ POSTGRES_CONNECTION_STRING = os.environ.get('POSTGRES_CONNECTION_STRING')
 OPEN_WEATHER_API_TOKEN = os.environ.get('OPEN_WEATHER_API_TOKEN')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG')
-print(os.environ.get('DEBUG'))
-ALLOWED_HOSTS = ['*']
+DEBUG = os.environ.get('DEBUG') == 'True'
 
+ALLOWED_HOSTS = ["https://mini-weather-portal.herokuapp.com/",
+                 "http://127.0.0.1:8000/"]
 # Application definition
 
 INSTALLED_APPS = [
@@ -99,6 +100,22 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
+        },
+    },
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
@@ -122,4 +139,4 @@ STATICFILES_DIRS = [
 ]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-# django_heroku.settings(locals())
+django_heroku.settings(locals())

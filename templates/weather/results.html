@@ -43,7 +43,6 @@
         $("#results_page").addClass("active");
         let urlParams = new URLSearchParams(window.location.search);
         let current_page = 1;
-        console.log(current_page);
         let page_cnt = 0;
         let selected_option = null;
 
@@ -63,30 +62,25 @@
             var day = date.getDate();
             var monthIndex = date.getMonth() + 1;
             var year = date.getFullYear();
-
             return `${year}-${monthIndex < 10 ? '0' + monthIndex : monthIndex}-${day} 00:00`;
         }
 
         $('#date_from').on('changeDate', function (e) {
             if (e.date) {
-                console.log(e.date.getTime());
                 urlParams.set('from', formatDate(e.date));
-                console.log(urlParams.toString());
-
             } else {
                 urlParams.delete('from');
             }
+            urlParams.set('page', 1);
             get_data();
         });
         $('#date_to').on('changeDate', function (e) {
             if (e.date) {
-                console.log(e.date.getTime());
                 urlParams.set('to', formatDate(e.date));
-                console.log(urlParams.toString());
-
             } else {
                 urlParams.delete('to');
             }
+            urlParams.set('page', 1);
             get_data();
         });
         $("#select_city").select2({
@@ -118,14 +112,12 @@
             urlParams.set('city', selected_option);
             urlParams.set('page', 1);
             get_data();
-            console.log(selected_option);
         });
         $("#select_city").on('select2:unselecting', function (event) {
             selected_option = null;
             urlParams.delete('city');
             urlParams.set('page', 1);
             get_data();
-            console.log(selected_option);
         });
 
         function render_weather(data) {
@@ -155,11 +147,11 @@
 
                 let card_body = document.createElement('div');
                 card_body.className = 'card-body text-secondary';
-                card_body.appendChild(document.createTextNode(`Weather: ${element['weather']}.`));
+                card_body.appendChild(document.createTextNode(`Weather: ${element['weather']}`));
                 card_body.innerHTML += '<br>';
-                card_body.appendChild(document.createTextNode(`Clouds: ${element['clouds']}%.`));
+                card_body.appendChild(document.createTextNode(`Clouds: ${element['clouds']}%`));
                 card_body.innerHTML += '<br>';
-                card_body.appendChild(document.createTextNode(`Wind: ${element['wind']}m/s.`));
+                card_body.appendChild(document.createTextNode(`Wind: ${element['wind']}m/s`));
 
                 card.appendChild(card_header);
                 card.appendChild(card_body);
@@ -171,7 +163,6 @@
 
         function click_pag(page) {
             urlParams.set("page", page);
-            console.log(urlParams.toString());
             get_data();
         }
 
@@ -225,7 +216,6 @@
                 </li>`;
             }
             render_str += '</div></div>';
-            console.log(start_range, end_range, print_begin, print_end);
             el.append(render_str)
         }
 
@@ -235,7 +225,6 @@
                 url: url,
                 type: 'GET',
                 success: function (data) {
-                    console.log(data);
                     if (data['code'] === '404') {
                         $('#res').empty();
                         $('#pagination').empty();
@@ -246,7 +235,6 @@
                     } else {
                         page_cnt = data['page_cnt'];
                         current_page = data['curr_page'];
-                        console.log(urlParams.toString());
                         render_paginator();
                         render_weather(data['items']);
                     }

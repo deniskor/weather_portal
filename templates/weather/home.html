@@ -47,12 +47,10 @@
             $("#select_city").on('select2:select', function (event) {
                 selected_option = $(event.currentTarget).find("option:selected").val();
                 document.getElementById("find").disabled = false;
-                console.log(selected_option);
             });
             $("#select_city").on('select2:unselecting', function (event) {
                 selected_option = null;
                 document.getElementById("find").disabled = true;
-                console.log(selected_option);
             });
 
             function draw_weather(el, data) {
@@ -68,9 +66,9 @@
                                     ${element['time']}
                             </div>
                             <div class="card-body text-secondary">
-                                <p class="card-text">Weather: ${element['weather']}.</p>
-                                <p class="card-text">Clouds: ${element['clouds']}%.</p>
-                                <p class="card-text">Wind: ${element['wind']}m/s.</p>
+                                Weather: ${element['weather']}<br>
+                                Clouds: ${element['clouds']}%<br>
+                                Wind: ${element['wind']}m/s<br>
                             </div>
                         </div>`;
                     s += card_s;
@@ -96,7 +94,6 @@
                         type: 'GET',
                         data: {'city': selected_option},
                         success: function (data) {
-                            console.log(data);
                             if(data['code'] === '200'){
                                 draw_result($('#date_weather'), data);
                             }
